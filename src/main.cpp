@@ -2,7 +2,8 @@
 //#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <vector>
-#include "cartridge.h"
+#include "cartridge.cpp"
+#include "storage.cpp"
 
 int main(int argc, char* argv[]) {
 

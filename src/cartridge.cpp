@@ -1,4 +1,7 @@
+#include <iostream>
 #include <fstream>
+#include <vector>
+
 
 std::vector<uint8_t> loadRom(std::string path){
     std::ifstream rom(path, std::ios::binary);
