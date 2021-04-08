@@ -1,5 +1,8 @@
+#include <iostream>
 #include <functional>
+#include <fstream>
 #include <map>
+#include <regex>
 #include "cpu.hpp"
 
 CPU::CPU(){
@@ -45,4 +48,28 @@ CPU::CPU(){
 
 CPU::~CPU(){
     delete[] &opcodes;
+}
+
+auto CPU::loadRom(std::string path) -> std::vector<uint8_t>{
+    std::ifstream rom(path, std::ios::binary);
+    if(!rom){
+        std::cout << "Game not found.\n";
+        return {};
+    }
+
+    return {std::istreambuf_iterator<char>(rom), {}};
+}
+
+auto CPU::fetchCode(std::vector<uint8_t>& rom, int index) -> uint16_t{
+    index *= 2;
+    return rom[index] << 8 | rom[index + 1];
+}
+
+void CPU::executeCode(uint16_t code){
+    for(auto const& kv : opcodes){
+        if(std::regex_match(std::to_string(code), std::regex(kv.first))){
+            kv.second(code);
+            break;
+        }
+    }
 }
