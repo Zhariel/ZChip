@@ -4,8 +4,21 @@
 #include <map>
 #include <regex>
 #include "cpu.hpp"
+#include <cstdint>
+
+#define INTERPRETER_MIN 0x000
+#define INTERPRETER_MAX 0x1FF
+#define FONT_SET_MIN 0x050
+#define FONT_SET_MAX 0x0A0
+#define WORKING_MIN 0x200
+#define WORKING_MAX 0xFFF
 
 CPU::CPU(){
+    opcode = 0;
+    I = 0x000;
+    PC = 0x200;
+    sp = 0;
+    std::fill(stack, stack + 15, -1);
     opcodes = {
         {"0.[^E].",[](uint16_t code){}},
         {"00E0",[](uint16_t code){}},
@@ -47,15 +60,16 @@ CPU::CPU(){
 }
 
 CPU::~CPU(){
-    delete[] &opcodes;
+    delete[] &PC, &I, &V, &key, &stack, &sp, &ram, &opcodes;
 }
 
-auto CPU::loadRom(std::string path) -> std::vector<uint8_t>{
+auto CPU::loadRom(const std::string& path) -> std::vector<uint8_t>{
     std::ifstream rom(path, std::ios::binary);
     if(!rom){
         std::cout << "Game not found.\n";
         return {};
     }
+    std::cout << "Rom loaded.\n";
 
     return {std::istreambuf_iterator<char>(rom), {}};
 }
@@ -72,4 +86,12 @@ void CPU::executeCode(uint16_t code){
             break;
         }
     }
+}
+
+void CPU::writeRegister(int v) {
+
+}
+
+void CPU::readRegister() {
+
 }
