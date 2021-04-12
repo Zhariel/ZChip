@@ -4,14 +4,14 @@
 class CPU{
     private:
     std::map<std::string, std::function<void(uint16_t)>> opcodes;
-    unsigned short opcode;
-    unsigned short PC;                  //Program counter
-    unsigned short I;                   //Index register
+    uint16_t opcode;
+    uint16_t PC;                  //Program counter
+    uint16_t I;                   //Index register
     unsigned char V[16]{};              //Registers
     unsigned char key[16]{};            //Keymap
-    unsigned short stack[16]{};         //Call stack
     unsigned char ram[4096]{};          //Ram
-    unsigned short sp;                  //Stack pointer
+    std::vector<uint16_t> stack;   //Call stack
+    uint16_t sp;                  //Stack pointer
 
     public:
     CPU();
@@ -20,10 +20,15 @@ class CPU{
     void reset();
     std::vector<uint8_t> loadRom(const std::string& path);
     uint16_t fetchCode(std::vector<uint8_t>& rom, int index);
-    void executeCode(std::uint16_t code);
-    void writeRegister(int v);
+    void executeCode(uint16_t code);
+    void writeRegister();
     void readRegister();
-    void jumpAt();
-    void storeStack();
-    void popStack();
+    void jumpAt(uint16_t dest);
+    void returnFrom();
+    uint16_t xNNN(uint16_t code);
+    uint16_t xxNN(uint16_t code);
+    uint16_t xNNx(uint16_t code);
+    uint16_t xNxx(uint16_t code);
+    uint16_t xxNx(uint16_t code);
+
 };

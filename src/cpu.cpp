@@ -18,43 +18,43 @@ CPU::CPU(){
     I = 0x000;
     PC = 0x200;
     sp = 0;
-    std::fill(stack, stack + 15, -1);
+    stack = std::vector<uint16_t>();
     opcodes = {
-        {"0.[^E].",[](uint16_t code){}},
-        {"00E0",[](uint16_t code){}},
-        {"00EE",[](uint16_t code){}},
-        {"1...",[](uint16_t code){}},
-        {"2...",[](uint16_t code){}},
-        {"3...",[](uint16_t code){}},
-        {"4...",[](uint16_t code){}},
-        {"5..0",[](uint16_t code){}},
-        {"6...",[](uint16_t code){}},
-        {"7...",[](uint16_t code){}},
-        {"8..0",[](uint16_t code){}},
-        {"8..1",[](uint16_t code){}},
-        {"8..2",[](uint16_t code){}},
-        {"8..3",[](uint16_t code){}},
-        {"8..4",[](uint16_t code){}},
-        {"8..5",[](uint16_t code){}},
-        {"8..6",[](uint16_t code){}},
-        {"8..7",[](uint16_t code){}},
-        {"8..E",[](uint16_t code){}},
-        {"9..0",[](uint16_t code){}},
-        {"A...",[](uint16_t code){}},
-        {"B...",[](uint16_t code){}},
-        {"C...",[](uint16_t code){}},
-        {"D...",[](uint16_t code){}},
-        {"E.9E",[](uint16_t code){}},
-        {"E.A1",[](uint16_t code){}},
-        {"F.07",[](uint16_t code){}},
-        {"F.0A",[](uint16_t code){}},
-        {"F.15",[](uint16_t code){}},
-        {"F.18",[](uint16_t code){}},
-        {"F.1E",[](uint16_t code){}},
-        {"F.29",[](uint16_t code){}},
-        {"F.33",[](uint16_t code){}},
-        {"F.35",[](uint16_t code){}},
-        {"F.85",[](uint16_t code){}}
+        {"0.[^E].",[this](uint16_t code){;}},
+        {"00E0",[this](uint16_t code){;}},
+        {"00EE",[this](uint16_t code){;}},
+        {"1...",[this](uint16_t code){jumpAt(xNNN(code));}},
+        {"2...",[this](uint16_t code){;}},
+        {"3...",[this](uint16_t code){;}},
+        {"4...",[this](uint16_t code){;}},
+        {"5..0",[this](uint16_t code){;}},
+        {"6...",[this](uint16_t code){V[xNxx(code)] = xxNN(code);}},
+        {"7...",[this](uint16_t code){V[xNxx(code)] += xxNN(code);}},
+        {"8..0",[this](uint16_t code){V[xNxx(code)] = V[xxNx(code)];}},
+        {"8..1",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] | V[xxNx(code)];}},
+        {"8..2",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] & V[xxNx(code)];}},
+        {"8..3",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] ^ V[xxNx(code)];}},
+        {"8..4",[this](uint16_t code){V[xNxx(code)] += V[xxNx(code)];}},
+        {"8..5",[this](uint16_t code){V[xNxx(code)] -= V[xxNx(code)];}},
+        {"8..6",[this](uint16_t code){V[15] = V[xNxx(code)] & 1; V[xNxx(code)] >>= 1;}},
+        {"8..7",[this](uint16_t code){V[xNxx(code)] = V[xxNx(code)] - V[xNxx(code)];}}, //V15 if Borrow
+        {"8..E",[this](uint16_t code){V[15] = V[xNxx(code)] & 0xEF; V[xNxx(code)] <<= 1;}},
+        {"9..0",[this](uint16_t code){;}},
+        {"A...",[this](uint16_t code){I = xNNN(code);}},
+        {"B...",[this](uint16_t code){ jumpAt(V[0] + xNNN(code));}},
+        {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 255) & xxNN(code);}},
+        {"D...",[this](uint16_t code){;}}, //Draw sprite
+        {"E.9E",[this](uint16_t code){;}},
+        {"E.A1",[this](uint16_t code){;}},
+        {"F.07",[this](uint16_t code){;}},
+        {"F.0A",[this](uint16_t code){;}},
+        {"F.15",[this](uint16_t code){;}}, //Timer VX
+        {"F.18",[this](uint16_t code){;}}, //Timer VY
+        {"F.1E",[this](uint16_t code){;}},
+        {"F.29",[this](uint16_t code){;}},
+        {"F.33",[this](uint16_t code){;}},
+        {"F.35",[this](uint16_t code){;}},
+        {"F.85",[this](uint16_t code){;}}
     };
 
 }
@@ -88,7 +88,37 @@ void CPU::executeCode(uint16_t code){
     }
 }
 
-void CPU::writeRegister(int v) {
+auto CPU::xNNN(uint16_t code) -> uint16_t {
+    return (code & 0x0FFF);
+}
+
+auto CPU::xxNN(uint16_t code) -> uint16_t {
+    return (code & 0x00FF);
+}
+
+auto CPU::xNNx(uint16_t code) -> uint16_t {
+    return (code & 0x0FF0) >> 4;
+}
+
+auto CPU::xNxx(uint16_t code) -> uint16_t {
+    return (code & 0x0F00) >> 8;
+}
+
+auto CPU::xxNx(uint16_t code) -> uint16_t {
+    return (code & 0x00F0) >> 4;
+}
+
+void CPU::jumpAt(uint16_t dest){
+    stack.push_back(PC);
+    PC = dest;
+}
+
+void CPU::returnFrom(){
+    PC = stack[stack.size()-1];
+    stack.pop_back();
+}
+
+void CPU::writeRegister() {
 
 }
 
