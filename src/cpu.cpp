@@ -80,8 +80,13 @@ auto CPU::fetchCode(std::vector<uint8_t>& rom, int index) -> uint16_t{
 }
 
 void CPU::executeCode(uint16_t code){
+    std::stringstream stream;
+    stream << std::hex << std::uppercase << code;
+
+    std::string code_string = stream.str();
+
     for(auto const& kv : opcodes){
-        if(std::regex_match(std::to_string(code), std::regex(kv.first))){
+        if(std::regex_match(code_string, std::regex(kv.first))){
             kv.second(code);
             break;
         }
