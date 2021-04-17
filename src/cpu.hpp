@@ -30,5 +30,5 @@ class CPU{
     uint16_t xNNx(uint16_t code);
     uint16_t xNxx(uint16_t code);
     uint16_t xxNx(uint16_t code);
-
+    void replaceChar(std::string &s, char x, char y);
 };

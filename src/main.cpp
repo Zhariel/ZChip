@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
         //std::cout << std::hex << cpu->fetchCode(rom, i) << " " << std::to_string(0x6b0c) << '\n';
     }
 
-    cpu->executeCode(0xE19E);
+    cpu->executeCode(0x0000);
 
     return 0;
 }

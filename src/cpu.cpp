@@ -1,10 +1,12 @@
 #include <iostream>
 #include <functional>
+#include <boost/algorithm/string/replace.hpp>
 #include <fstream>
 #include <map>
 #include <regex>
 #include "cpu.hpp"
 #include <cstdint>
+#include <iomanip>
 
 #define INTERPRETER_MIN 0x000
 #define INTERPRETER_MAX 0x1FF
@@ -81,9 +83,10 @@ auto CPU::fetchCode(std::vector<uint8_t>& rom, int index) -> uint16_t{
 
 void CPU::executeCode(uint16_t code){
     std::stringstream stream;
-    stream << std::hex << std::uppercase << code;
+    stream << std::hex << std::uppercase << std::setw(4) << code;
 
     std::string code_string = stream.str();
+    replaceChar(code_string, ' ', '0');
 
     for(auto const& kv : opcodes){
         if(std::regex_match(code_string, std::regex(kv.first))){
@@ -129,4 +132,12 @@ void CPU::writeRegister() {
 
 void CPU::readRegister() {
 
+}
+
+void CPU::replaceChar(std::string& s, char x, char y){
+    int i = 0;
+    while(s[i] == x) {
+        s[i] = y;
+        i++;
+    }
 }
