@@ -37,27 +37,27 @@ CPU::CPU(){
         {"8..1",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] | V[xxNx(code)];}},
         {"8..2",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] & V[xxNx(code)];}},
         {"8..3",[this](uint16_t code){V[xNxx(code)] = V[xNxx(code)] ^ V[xxNx(code)];}},
-        {"8..4",[this](uint16_t code){V[xNxx(code)] += V[xxNx(code)];}},
-        {"8..5",[this](uint16_t code){V[xNxx(code)] -= V[xxNx(code)];}},
-        {"8..6",[this](uint16_t code){V[15] = V[xNxx(code)] & 1; V[xNxx(code)] >>= 1;}},
-        {"8..7",[this](uint16_t code){V[xNxx(code)] = V[xxNx(code)] - V[xNxx(code)];}}, //V15 if Borrow
-        {"8..E",[this](uint16_t code){V[15] = V[xNxx(code)] & 0xEF; V[xNxx(code)] <<= 1;}},
+        {"8..4",[this](uint16_t code){uint8_t val = (V[xNxx(code)] += V[xxNx(code)]); V[xNxx(code)] = val; V[0xF] = V[xNxx(code)] + V[xxNx(code)] > 0xFF ? 01 : 00;}},
+        {"8..5",[this](uint16_t code){uint8_t val = (V[xNxx(code)] - V[xxNx(code)]); V[xNxx(code)] = val; V[0xF] = V[xNxx(code)] < V[xxNx(code)] ? 01 : 00;}},
+        {"8..6",[this](uint16_t code){V[0xF] = V[xNxx(code)] & 1; V[xNxx(code)] >>= 1;}},
+        {"8..7",[this](uint16_t code){uint8_t val = (V[xxNx(code)] - V[xNxx(code)]); V[xNxx(code)] = val; V[0xF] = V[xxNx(code)] < V[xNxx(code)] ? 01 : 00;}},
+        {"8..E",[this](uint16_t code){V[0xF] = V[xNxx(code)] & 0xEF; V[xNxx(code)] <<= 1;}},
         {"9..0",[this](uint16_t code){if (V[xNxx(code)] != V[xxNx(code)]) PC += 2;}},
         {"A...",[this](uint16_t code){I = xNNN(code);}},
-        {"B...",[this](uint16_t code){jumpAt(V[0] + xNNN(code));}},
-        {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 255) & xxNN(code);}},
+        {"B...",[this](uint16_t code){jumpAt(V[0x0] + xNNN(code));}},
+        {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 0xFF) & xxNN(code);}},
         {"D...",[this](uint16_t code){;}}, //Draw sprite
         {"E.9E",[this](uint16_t code){;}},
         {"E.A1",[this](uint16_t code){;}},
         {"F.07",[this](uint16_t code){V[xNxx(code)] = delay_timer;}},
-        {"F.0A",[this](uint16_t code){unsigned char k; std::cin >> k; V[xNxx(code)] = k;}},
+        {"F.0A",[this](uint16_t code){;}},
         {"F.15",[this](uint16_t code){delay_timer = V[xNxx(code)];}},
         {"F.18",[this](uint16_t code){sound_timer = V[xNxx(code)];}},
-        {"F.1E",[this](uint16_t code){;}},
+        {"F.1E",[this](uint16_t code){I += V[xNxx(code)];}},
         {"F.29",[this](uint16_t code){;}},
         {"F.33",[this](uint16_t code){;}},
-        {"F.35",[this](uint16_t code){;}},
-        {"F.85",[this](uint16_t code){;}}
+        {"F.35",[this](uint16_t code){reg_dump(V[xNxx(code)]);}},
+        {"F.65",[this](uint16_t code){reg_load(V[xNxx(code)]);}}
     };
 
 }
@@ -103,16 +103,34 @@ void CPU::executeCode(uint16_t code){
     }
 }
 
+void CPU::reg_dump(uint16_t bound){
+    uint16_t j = 0;
+    uint16_t address = I;
+
+    while(j <= bound){
+        memory[address] = V[j];
+        j++;
+        address++;
+    }
+}
+
+void CPU::reg_load(uint16_t bound){
+    uint16_t j = 0;
+    uint16_t address = I;
+
+    while(j <= bound){
+         V[j] = memory[address];
+        j++;
+        address++;
+    }
+}
+
 auto CPU::xNNN(uint16_t code) -> uint16_t {
     return (code & 0x0FFF);
 }
 
 auto CPU::xxNN(uint16_t code) -> uint16_t {
     return (code & 0x00FF);
-}
-
-auto CPU::xNNx(uint16_t code) -> uint16_t {
-    return (code & 0x0FF0) >> 4;
 }
 
 auto CPU::xNxx(uint16_t code) -> uint16_t {

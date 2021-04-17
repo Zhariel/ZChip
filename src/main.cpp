@@ -7,14 +7,15 @@ int main(int argc, char* argv[]) {
     CPU * cpu = new CPU;
 
     std::vector<std::uint8_t> rom = cpu->readROM("../res/Pong.ch8");
-    std::cout << rom.size() << "\n";
+    //std::cout << rom.size() << "\n";
 
 
     for(int i = 0; i < rom.size()/2; i++){
-        std::cout << std::hex << cpu->fetchCode(rom, i) << '\n';
+        //std::cout << std::hex << cpu->fetchCode(rom, i) << '\n';
     }
 
-    cpu->executeCode(0x0000);
+    uint8_t test = 0 - 1;
+    std::cout << int(test);
 
     return 0;
 }
