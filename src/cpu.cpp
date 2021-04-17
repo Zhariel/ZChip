@@ -20,16 +20,17 @@ CPU::CPU(){
     I = 0x000;
     PC = 0x200;
     sp = 0;
+    delay_timer = sound_timer = 0;
     stack = std::vector<uint16_t>();
     opcodes = {
         {"0.[^E].",[this](uint16_t code){;}},
-        {"00E0",[this](uint16_t code){;}},
-        {"00EE",[this](uint16_t code){;}},
+        {"00E0",[this](uint16_t code){;}},  //CLS
+        {"00EE",[this](uint16_t code){returnFromSub();}},
         {"1...",[this](uint16_t code){jumpAt(xNNN(code));}},
-        {"2...",[this](uint16_t code){;}},
-        {"3...",[this](uint16_t code){;}},
-        {"4...",[this](uint16_t code){;}},
-        {"5..0",[this](uint16_t code){;}},
+        {"2...",[this](uint16_t code){callSub(xNNN(code));}},
+        {"3...",[this](uint16_t code){if (V[xNxx(code)] == xxNN(code)) PC += 2;}},
+        {"4...",[this](uint16_t code){if (V[xNxx(code)] != xxNN(code)) PC += 2;}},
+        {"5..0",[this](uint16_t code){if (V[xNxx(code)] == V[xxNx(code)]) PC += 2;}},
         {"6...",[this](uint16_t code){V[xNxx(code)] = xxNN(code);}},
         {"7...",[this](uint16_t code){V[xNxx(code)] += xxNN(code);}},
         {"8..0",[this](uint16_t code){V[xNxx(code)] = V[xxNx(code)];}},
@@ -41,17 +42,17 @@ CPU::CPU(){
         {"8..6",[this](uint16_t code){V[15] = V[xNxx(code)] & 1; V[xNxx(code)] >>= 1;}},
         {"8..7",[this](uint16_t code){V[xNxx(code)] = V[xxNx(code)] - V[xNxx(code)];}}, //V15 if Borrow
         {"8..E",[this](uint16_t code){V[15] = V[xNxx(code)] & 0xEF; V[xNxx(code)] <<= 1;}},
-        {"9..0",[this](uint16_t code){;}},
+        {"9..0",[this](uint16_t code){if (V[xNxx(code)] != V[xxNx(code)]) PC += 2;}},
         {"A...",[this](uint16_t code){I = xNNN(code);}},
         {"B...",[this](uint16_t code){jumpAt(V[0] + xNNN(code));}},
         {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 255) & xxNN(code);}},
         {"D...",[this](uint16_t code){;}}, //Draw sprite
         {"E.9E",[this](uint16_t code){;}},
         {"E.A1",[this](uint16_t code){;}},
-        {"F.07",[this](uint16_t code){;}},
-        {"F.0A",[this](uint16_t code){;}},
-        {"F.15",[this](uint16_t code){;}}, //Timer VX
-        {"F.18",[this](uint16_t code){;}}, //Timer VY
+        {"F.07",[this](uint16_t code){V[xNxx(code)] = delay_timer;}},
+        {"F.0A",[this](uint16_t code){unsigned char k; std::cin >> k; V[xNxx(code)] = k;}},
+        {"F.15",[this](uint16_t code){delay_timer = V[xNxx(code)];}},
+        {"F.18",[this](uint16_t code){sound_timer = V[xNxx(code)];}},
         {"F.1E",[this](uint16_t code){;}},
         {"F.29",[this](uint16_t code){;}},
         {"F.33",[this](uint16_t code){;}},
@@ -62,10 +63,10 @@ CPU::CPU(){
 }
 
 CPU::~CPU(){
-    delete[] &PC, &I, &V, &key, &stack, &sp, &ram, &opcodes;
+    delete[] &PC, &I, &V, &key, &stack, &sp, &memory, &opcodes;
 }
 
-auto CPU::loadRom(const std::string& path) -> std::vector<uint8_t>{
+auto CPU::readROM(const std::string& path) -> std::vector<uint8_t>{
     std::ifstream rom(path, std::ios::binary);
     if(!rom){
         std::cout << "Game not found.\n";
@@ -74,6 +75,12 @@ auto CPU::loadRom(const std::string& path) -> std::vector<uint8_t>{
     std::cout << "Rom loaded.\n";
 
     return {std::istreambuf_iterator<char>(rom), {}};
+}
+
+void CPU::loadROM(const std::vector<uint8_t>& rom) {
+    for(int i = 0; i < rom.size(); i++){
+        memory[0x200 + i] = rom[i];
+    }
 }
 
 auto CPU::fetchCode(std::vector<uint8_t>& rom, int index) -> uint16_t{
@@ -86,7 +93,7 @@ void CPU::executeCode(uint16_t code){
     stream << std::hex << std::uppercase << std::setw(4) << code;
 
     std::string code_string = stream.str();
-    replaceChar(code_string, ' ', '0');
+    removeSpaces(code_string);
 
     for(auto const& kv : opcodes){
         if(std::regex_match(code_string, std::regex(kv.first))){
@@ -117,11 +124,15 @@ auto CPU::xxNx(uint16_t code) -> uint16_t {
 }
 
 void CPU::jumpAt(uint16_t dest){
+    PC = dest;
+}
+
+void CPU::callSub(uint16_t dest){
     stack.push_back(PC);
     PC = dest;
 }
 
-void CPU::returnFrom(){
+void CPU::returnFromSub(){
     PC = stack[stack.size()-1];
     stack.pop_back();
 }
@@ -134,10 +145,10 @@ void CPU::readRegister() {
 
 }
 
-void CPU::replaceChar(std::string& s, char x, char y){
+void CPU::removeSpaces(std::string& s){
     int i = 0;
-    while(s[i] == x) {
-        s[i] = y;
+    while(s[i] == ' ') {
+        s[i] = '0';
         i++;
     }
 }
