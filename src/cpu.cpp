@@ -43,7 +43,7 @@ CPU::CPU(){
         {"8..E",[this](uint16_t code){V[15] = V[xNxx(code)] & 0xEF; V[xNxx(code)] <<= 1;}},
         {"9..0",[this](uint16_t code){;}},
         {"A...",[this](uint16_t code){I = xNNN(code);}},
-        {"B...",[this](uint16_t code){ jumpAt(V[0] + xNNN(code));}},
+        {"B...",[this](uint16_t code){jumpAt(V[0] + xNNN(code));}},
         {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 255) & xxNN(code);}},
         {"D...",[this](uint16_t code){;}}, //Draw sprite
         {"E.9E",[this](uint16_t code){;}},
