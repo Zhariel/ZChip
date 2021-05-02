@@ -4,9 +4,10 @@
 #include <fstream>
 #include <map>
 #include <regex>
-#include "cpu.hpp"
 #include <cstdint>
 #include <iomanip>
+#include "cpu.hpp"
+#include "ppu.hpp"
 
 #define INTERPRETER_MIN 0x000
 #define INTERPRETER_MAX 0x1FF
@@ -64,6 +65,18 @@ CPU::CPU(){
 
 CPU::~CPU(){
     delete[] &PC, &I, &V, &key, &stack, &sp, &memory, &opcodes;
+}
+
+void CPU::run() {
+    PPU * ppu = new PPU;
+    ppu->cls(0, 0, 0, 0xFF);
+    ppu->alive = true;
+    for(;;){
+
+
+        ppu->processEvent();
+    }
+    ppu->destroy();
 }
 
 auto CPU::readROM(const std::string& path) -> std::vector<uint8_t>{

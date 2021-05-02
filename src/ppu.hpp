@@ -1,6 +1,19 @@
-class GFX{
+#include <SDL2/SDL.h>
+
+class PPU{
     public:
-    unsigned char screen[64 * 32];
+    unsigned char screen[64 * 32]{};
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    bool alive;
+    SDL_Event event;
+
+    PPU();
+    ~PPU();
+    void processEvent();
+    void cls(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+    void verify();
+    void destroy();
 };
 
 

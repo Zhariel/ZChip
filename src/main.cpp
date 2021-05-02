@@ -1,7 +1,7 @@
 #include <iostream>
-#include <SDL2/SDL.h>
 #include <vector>
 #include "cpu.hpp"
+#include "ppu.hpp"
 
 int main(int argc, char* argv[]) {
     CPU * cpu = new CPU;
@@ -14,8 +14,7 @@ int main(int argc, char* argv[]) {
         //std::cout << std::hex << cpu->fetchCode(rom, i) << '\n';
     }
 
-    uint8_t test = 0 - 1;
-    std::cout << int(test);
+    cpu->run();
 
     return 0;
 }
