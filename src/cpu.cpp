@@ -1,13 +1,12 @@
 #include <iostream>
 #include <functional>
-#include <boost/algorithm/string/replace.hpp>
 #include <fstream>
 #include <map>
 #include <regex>
 #include <cstdint>
 #include <iomanip>
+//#include <boost/algorithm/string/replace.hpp>
 #include "cpu.hpp"
-#include "ppu.hpp"
 
 #define INTERPRETER_MIN 0x000
 #define INTERPRETER_MAX 0x1FF
@@ -23,9 +22,10 @@ CPU::CPU(){
     sp = 0;
     delay_timer = sound_timer = 0;
     stack = std::vector<uint16_t>();
+    ppu = new PPU;
     opcodes = {
         {"0.[^E].",[this](uint16_t code){;}},
-        {"00E0",[this](uint16_t code){;}},  //CLS
+        {"00E0",[this](uint16_t code){ppu->cls(0, 0, 0, 0xFF);}},
         {"00EE",[this](uint16_t code){returnFromSub();}},
         {"1...",[this](uint16_t code){jumpAt(xNNN(code));}},
         {"2...",[this](uint16_t code){callSub(xNNN(code));}},
@@ -47,34 +47,37 @@ CPU::CPU(){
         {"A...",[this](uint16_t code){I = xNNN(code);}},
         {"B...",[this](uint16_t code){jumpAt(V[0x0] + xNNN(code));}},
         {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 0xFF) & xxNN(code);}},
-        {"D...",[this](uint16_t code){;}}, //Draw sprite
-        {"E.9E",[this](uint16_t code){;}},
-        {"E.A1",[this](uint16_t code){;}},
+        {"D...",[this](uint16_t code){ppu->draw_sprite(V[xNxx(code)], V[xxNx(code)], 8, xxxN(code)+1);}}, //Draw sprite
+        {"E.9E",[this](uint16_t code){if(ppu->key[xNxx(code)]) PC += 2;}},
+        {"E.A1",[this](uint16_t code){if(!ppu->key[xNxx(code)]) PC += 2;}},
         {"F.07",[this](uint16_t code){V[xNxx(code)] = delay_timer;}},
-        {"F.0A",[this](uint16_t code){;}},
+        {"F.0A",[this](uint16_t code){V[xNxx(code)] = ppu->input();}},
         {"F.15",[this](uint16_t code){delay_timer = V[xNxx(code)];}},
         {"F.18",[this](uint16_t code){sound_timer = V[xNxx(code)];}},
         {"F.1E",[this](uint16_t code){I += V[xNxx(code)];}},
-        {"F.29",[this](uint16_t code){;}},
+        {"F.29",[this](uint16_t code){I = ppu->fontset[V[xNxx(code)]];}},
         {"F.33",[this](uint16_t code){;}},
         {"F.35",[this](uint16_t code){reg_dump(V[xNxx(code)]);}},
         {"F.65",[this](uint16_t code){reg_load(V[xNxx(code)]);}}
     };
-
 }
 
 CPU::~CPU(){
-    delete[] &PC, &I, &V, &key, &stack, &sp, &memory, &opcodes;
+    delete[] &PC, &I, &V, &stack, &sp, &memory, &opcodes;
 }
 
 void CPU::run() {
-    PPU * ppu = new PPU;
     ppu->cls(0, 0, 0, 0xFF);
     ppu->alive = true;
     for(;;){
 
-
         ppu->processEvent();
+        if(delay_timer > 0) {
+            delay_timer--;}
+        if(sound_timer > 0) {
+            if (sound_timer == 1)
+                std::cout << "Le beep\n";
+                sound_timer--;}
     }
     ppu->destroy();
 }
@@ -152,6 +155,10 @@ auto CPU::xNxx(uint16_t code) -> uint16_t {
 
 auto CPU::xxNx(uint16_t code) -> uint16_t {
     return (code & 0x00F0) >> 4;
+}
+
+auto CPU::xxxN(uint16_t code) -> uint16_t {
+    return (code & 0x000F);
 }
 
 void CPU::jumpAt(uint16_t dest){

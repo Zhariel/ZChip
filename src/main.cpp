@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include "cpu.hpp"
-#include "ppu.hpp"
 
 int main(int argc, char* argv[]) {
     CPU * cpu = new CPU;
