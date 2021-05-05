@@ -15,6 +15,10 @@
 #define WORKING_MIN 0x200
 #define WORKING_MAX 0xFFF
 
+#define CLS_R 8
+#define CLS_G 4
+#define CLS_B 15
+
 CPU::CPU(){
     opcode = 0;
     I = 0x000;
@@ -27,7 +31,7 @@ CPU::CPU(){
     loadFontSet();
     opcodes = {
         {"0.[^E].",[this](uint16_t code){;}},
-        {"00E0",[this](uint16_t code){ppu->cls(0, 0, 0, 0xFF);}},
+        {"00E0",[this](uint16_t code){ppu->cls(CLS_R, CLS_G, CLS_B, 0xFF);}},
         {"00EE",[this](uint16_t code){returnFromSub();}},
         {"1...",[this](uint16_t code){jumpAt(xNNN(code));}},
         {"2...",[this](uint16_t code){callSub(xNNN(code));}},
@@ -69,15 +73,13 @@ CPU::~CPU(){
 }
 
 void CPU::run() {
-    ppu->cls(0, 0, 0, 0xFF);
+    ppu->cls(CLS_R, CLS_G, CLS_B, 0xFF);
     ppu->alive = true;
-//    for(int i = 0x050; i < 0x0A0; i++){
-//        uint16_t e = memory[i];
-//        std::cout << std::hex << e << " ";
-//    }
+    //
     for(int i = 0; i < 15; i++){
         ppu->draw_sprite(memory, i*5, 0, FONT_SET_MIN + i*5, 5);
     }
+    //
     for(;;){
 
         ppu->processEvent();
@@ -109,9 +111,7 @@ void CPU::loadROM(const std::vector<uint8_t>& rom) {
 }
 
 void CPU::loadFontSet(){
-//    std::cout << "loading" << std::endl;
-    for(int i = FONT_SET_MIN, k = 0; i < ppu->fontset.size(); i++, k++){
-//        std::cout << ppu->fontset[k] << " ";
+    for(int i = FONT_SET_MIN, k = 0; i < FONT_SET_MAX; i++, k++){
         memory[i] = ppu->fontset[k];
     }
 }
