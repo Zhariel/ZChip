@@ -8,10 +8,10 @@ class CPU{
     uint16_t opcode;
     uint16_t PC;                        //Program counter
     uint16_t I;                         //Index register
-    unsigned char V[16]{};              //Registers
-    unsigned char memory[4096]{};       //Ram
-    unsigned char delay_timer;
-    unsigned char sound_timer;
+    uint8_t V[16]{};              //Registers
+    uint8_t memory[4096]{};       //Ram
+    uint8_t delay_timer;
+    uint8_t sound_timer;
     std::vector<uint16_t> stack;        //Call stack
     uint16_t sp;                        //Stack pointer
     PPU * ppu;
@@ -23,8 +23,9 @@ class CPU{
     void reset();
     std::vector<uint8_t> readROM(const std::string& path);
     void loadROM(const std::vector<uint8_t>& rom);
-    uint16_t fetchCode(std::vector<uint8_t>& rom, int index);
+    uint16_t fetchCode(int index);
     void executeCode(uint16_t code);
+    void loadFontSet();
     void writeRegister();
     void readRegister();
     void jumpAt(uint16_t dest);
@@ -32,10 +33,10 @@ class CPU{
     void returnFromSub();
     void reg_dump(uint16_t bound);
     void reg_load(uint16_t bound);
+    void removeSpaces(std::string& s);
     uint16_t xNNN(uint16_t code);
     uint16_t xxNN(uint16_t code);
     uint16_t xNxx(uint16_t code);
     uint16_t xxNx(uint16_t code);
     uint16_t xxxN(uint16_t code);
-    void removeSpaces(std::string& s);
 };

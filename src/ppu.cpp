@@ -1,25 +1,53 @@
 #include "ppu.hpp"
 #include <SDL2/SDL.h>
 
+#define RATIO 10
+
 PPU::PPU(){
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_EVERYTHING);
     window = SDL_CreateWindow(
             "ZChip",                  // window title
             SDL_WINDOWPOS_UNDEFINED,           // initial x position
             SDL_WINDOWPOS_UNDEFINED,           // initial y position
-            640,                               // width, in pixels
-            320,                               // height, in pixels
+            64 * RATIO,                               // width, in pixels
+            32 * RATIO,                               // height, in pixels
             SDL_WINDOW_OPENGL                  // flags - see below
     );
+    surface = SDL_GetWindowSurface(window);
+    renderer = SDL_CreateRenderer(window, -1, 0);
     key_map = init_keymap();
     fontset = init_fontset();
-    renderer = SDL_CreateRenderer(window, -1, 0);
     alive = true;
     verify();
 }
 
 PPU::~PPU() {
-    delete[] screen, window, renderer;
+    delete[] screen, window, surface, renderer;
+}
+
+void PPU::draw_sprite(uint8_t memory[4096], uint16_t x, uint16_t y, uint16_t location, uint16_t N){
+
+    uint8_t nX = x;
+    uint8_t nY = y;
+    for(int i = location; i < location + N; ++i) {
+        uint8_t byte = memory[i] >> 4;
+
+        for(int k = 0; k < 4; k++){
+            if((byte >> (3 - k)) & 1){
+                drawSquare(nX*RATIO, nY*RATIO);
+            }
+            nX ++;
+        }
+        nX = x;
+        nY++;
+    }
+}
+
+void PPU::drawSquare(uint16_t x, uint16_t y){
+    SDL_Rect r = {x, y, RATIO, RATIO};
+    SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+    SDL_RenderFillRect(renderer, &r);
+    SDL_RenderPresent(renderer);
 }
 
 void PPU::processEvent(){
@@ -45,25 +73,6 @@ void PPU::destroy(){
     SDL_Delay(3000);
     SDL_DestroyWindow(window);
     SDL_Quit();
-};
-
-void PPU::verify(){
-    if (window == nullptr) {
-        // In the case that the window could not be made...
-        printf("Could not create window: %s\n", SDL_GetError());
-    }
-}
-
-void PPU::poll(){
-    while(SDL_PollEvent(&event)){
-        if(event.type == SDL_QUIT){
-            alive = false;
-            destroy();
-        }
-    }
-}
-
-void PPU::draw_sprite(uint8_t x, uint8_t y, uint8_t h, uint8_t w){
 }
 
 auto PPU::input() -> uint8_t {
@@ -78,6 +87,22 @@ auto PPU::input() -> uint8_t {
             }
         }
         poll();
+    }
+}
+
+void PPU::verify(){
+    if (window == nullptr) {
+        // In the case that the window could not be made...
+        printf("Could not create window: %s\n", SDL_GetError());
+    }
+}
+
+void PPU::poll(){
+    while(SDL_PollEvent(&event)){
+        if(event.type == SDL_QUIT){
+            alive = false;
+            destroy();
+        }
     }
 }
 

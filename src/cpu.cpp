@@ -23,6 +23,8 @@ CPU::CPU(){
     delay_timer = sound_timer = 0;
     stack = std::vector<uint16_t>();
     ppu = new PPU;
+    loadROM(readROM("../res/Pong.ch8"));
+    loadFontSet();
     opcodes = {
         {"0.[^E].",[this](uint16_t code){;}},
         {"00E0",[this](uint16_t code){ppu->cls(0, 0, 0, 0xFF);}},
@@ -47,7 +49,7 @@ CPU::CPU(){
         {"A...",[this](uint16_t code){I = xNNN(code);}},
         {"B...",[this](uint16_t code){jumpAt(V[0x0] + xNNN(code));}},
         {"C...",[this](uint16_t code){V[xNxx(code)] = (rand() % 0xFF) & xxNN(code);}},
-        {"D...",[this](uint16_t code){ppu->draw_sprite(V[xNxx(code)], V[xxNx(code)], 8, xxxN(code)+1);}}, //Draw sprite
+        {"D...",[this](uint16_t code){ppu->draw_sprite(memory, V[xNxx(code)], V[xxNx(code)], I, xxxN(code)+1);}}, //Draw sprite
         {"E.9E",[this](uint16_t code){if(ppu->key[xNxx(code)]) PC += 2;}},
         {"E.A1",[this](uint16_t code){if(!ppu->key[xNxx(code)]) PC += 2;}},
         {"F.07",[this](uint16_t code){V[xNxx(code)] = delay_timer;}},
@@ -69,6 +71,13 @@ CPU::~CPU(){
 void CPU::run() {
     ppu->cls(0, 0, 0, 0xFF);
     ppu->alive = true;
+//    for(int i = 0x050; i < 0x0A0; i++){
+//        uint16_t e = memory[i];
+//        std::cout << std::hex << e << " ";
+//    }
+    for(int i = 0; i < 15; i++){
+        ppu->draw_sprite(memory, i*5, 0, FONT_SET_MIN + i*5, 5);
+    }
     for(;;){
 
         ppu->processEvent();
@@ -95,13 +104,20 @@ auto CPU::readROM(const std::string& path) -> std::vector<uint8_t>{
 
 void CPU::loadROM(const std::vector<uint8_t>& rom) {
     for(int i = 0; i < rom.size(); i++){
-        memory[0x200 + i] = rom[i];
+        memory[WORKING_MIN + i] = rom[i];
     }
 }
 
-auto CPU::fetchCode(std::vector<uint8_t>& rom, int index) -> uint16_t{
-    index *= 2;
-    return rom[index] << 8 | rom[index + 1];
+void CPU::loadFontSet(){
+//    std::cout << "loading" << std::endl;
+    for(int i = FONT_SET_MIN, k = 0; i < ppu->fontset.size(); i++, k++){
+//        std::cout << ppu->fontset[k] << " ";
+        memory[i] = ppu->fontset[k];
+    }
+}
+
+auto CPU::fetchCode(int index) -> uint16_t{
+    return memory[index] << 8 | memory[index + 1];
 }
 
 void CPU::executeCode(uint16_t code){

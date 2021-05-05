@@ -5,14 +5,11 @@
 int main(int argc, char* argv[]) {
     CPU * cpu = new CPU;
 
-    std::vector<std::uint8_t> rom = cpu->readROM("../res/Pong.ch8");
-    //std::cout << rom.size() << "\n";
+//    std::vector<std::uint8_t> rom = cpu->readROM("../res/Pong.ch8");
 
-
-    for(int i = 0; i < rom.size()/2; i++){
-        //std::cout << std::hex << cpu->fetchCode(rom, i) << '\n';
-    }
-
+//    for(int i = 0x200; i < rom.size() + 0x200; i+=2) {
+//        std::cout << "code : " << std::hex << cpu->fetchCode(i) << '\n';
+//    }
     cpu->run();
 
     return 0;
