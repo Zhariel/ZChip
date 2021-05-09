@@ -5,6 +5,7 @@
 #include <regex>
 #include <cstdint>
 #include <iomanip>
+#include <unistd.h>
 //#include <boost/algorithm/string/replace.hpp>
 #include "cpu.hpp"
 
@@ -19,15 +20,15 @@
 #define CLS_G 4
 #define CLS_B 15
 
-CPU::CPU(){
+CPU::CPU(std::string const& path){
     opcode = 0;
     I = 0x000;
-    PC = 0x200;
+    PC = WORKING_MIN;
     sp = 0;
     delay_timer = sound_timer = 0;
     stack = std::vector<uint16_t>();
     ppu = new PPU;
-    loadROM(readROM("../res/Pong.ch8"));
+    loadROM(readROM(path));
     loadFontSet();
     opcodes = {
         {"0.[^E].",[this](uint16_t code){;}},
@@ -62,7 +63,7 @@ CPU::CPU(){
         {"F.18",[this](uint16_t code){sound_timer = V[xNxx(code)];}},
         {"F.1E",[this](uint16_t code){I += V[xNxx(code)];}},
         {"F.29",[this](uint16_t code){I = ppu->fontset[V[xNxx(code)]];}},
-        {"F.33",[this](uint16_t code){;}},
+        {"F.33",[this](uint16_t code){memory[I] = V[xNxx(code)] / 100; memory[I+1] = (V[xNxx(code)]/10) %10; memory[I+2] = (V[xNxx(code)]%100) %10;}},
         {"F.35",[this](uint16_t code){reg_dump(V[xNxx(code)]);}},
         {"F.65",[this](uint16_t code){reg_load(V[xNxx(code)]);}}
     };
@@ -76,21 +77,28 @@ void CPU::run() {
     ppu->cls(CLS_R, CLS_G, CLS_B, 0xFF);
     ppu->alive = true;
     //
-    for(int i = 0; i < 15; i++){
-        ppu->draw_sprite(memory, i*5, 0, FONT_SET_MIN + i*5, 5);
-    }
+//    for(int i = 0; i < 15; i++){
+//        ppu->draw_sprite(memory, i*5, 0, FONT_SET_MIN + i*5, 5);
+//    }
     //
-    for(;;){
-
+    for(;;PC+=2){
+        cycle();
         ppu->processEvent();
         if(delay_timer > 0) {
-            delay_timer--;}
+            delay_timer--;
+        }
         if(sound_timer > 0) {
             if (sound_timer == 1)
                 std::cout << "Le beep\n";
-                sound_timer--;}
+                sound_timer--;
+        }
+        sleep(0.0016);
     }
     ppu->destroy();
+}
+
+void CPU::cycle(){
+    executeCode(fetchCode(PC));
 }
 
 auto CPU::readROM(const std::string& path) -> std::vector<uint8_t>{
@@ -189,14 +197,6 @@ void CPU::callSub(uint16_t dest){
 void CPU::returnFromSub(){
     PC = stack[stack.size()-1];
     stack.pop_back();
-}
-
-void CPU::writeRegister() {
-
-}
-
-void CPU::readRegister() {
-
 }
 
 void CPU::removeSpaces(std::string& s){

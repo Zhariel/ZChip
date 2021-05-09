@@ -58,6 +58,7 @@ void PPU::processEvent(){
             if(!key[i]){
                 key[i] = true;
             }
+            std::cout << "Pressed : " << i << std::endl;
         }
     }
     poll();

@@ -3,7 +3,7 @@
 #include "cpu.hpp"
 
 int main(int argc, char* argv[]) {
-    CPU * cpu = new CPU;
+    CPU * cpu = new CPU("../res/test_opcode.ch8");
 
 //    std::vector<std::uint8_t> rom = cpu->readROM("../res/Pong.ch8");
 

@@ -17,17 +17,16 @@ class CPU{
     PPU * ppu;
 
     public:
-    CPU();
+    CPU(std::string const& path);
     ~CPU();
     void run();
     void reset();
+    void cycle();
     std::vector<uint8_t> readROM(const std::string& path);
     void loadROM(const std::vector<uint8_t>& rom);
     uint16_t fetchCode(int index);
     void executeCode(uint16_t code);
     void loadFontSet();
-    void writeRegister();
-    void readRegister();
     void jumpAt(uint16_t dest);
     void callSub(uint16_t dest);
     void returnFromSub();
